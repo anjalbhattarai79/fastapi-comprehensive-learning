@@ -159,3 +159,11 @@ async def update_post(id:int, post: schemas.PostCreate, db: session = Depends(ge
     
     return  post_query.first()
     
+@app.post("/users", response_model = schemas.UserOut)    
+async def create_user(user: schemas.UserCreate, db: session = Depends(get_db)):
+    new_post = models.User(**user.model_dump())
+    db.add(new_post)    
+    db.commit()
+    db.refresh(new_post)
+    return new_post
+    
