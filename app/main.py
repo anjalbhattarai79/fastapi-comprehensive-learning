@@ -6,18 +6,15 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from . import models
+from . import schemas
 from .database import engine, get_db
+from typing import Optional, List
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 
-# pydantic schema
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
 
 
 while True:    
@@ -31,6 +28,8 @@ while True:
         print("Database connection failed")
         print("Error: ", e)
         time.sleep(2) # wait for 2 seconds before trying to connect again
+        
+        
 
 @app.get("/") # This will be shown
 async def read_root():
@@ -40,14 +39,14 @@ async def read_root():
 async def read_root():
     return {"message": "Welcome to my api 2"}
 
-@app.get("/sqlalchemy")
+'''@app.get("/sqlalchemy")
 async def read_sqlalchemy(db: session = Depends(get_db)):
     
     posts = db.query(models.Post).all() # db.query() prepares the query to be executed. The actual execution happens when we call .all() method, which fetches all the records from the database and returns them as a list of Post objects.
  
     return {"message": "SQLAlchemy is working", "data": posts}
     # return None
-
+'''
 
 # using path parameters
 # @app.get("/posts/{i}")
@@ -71,25 +70,25 @@ async def create_post(post : Post):
 #-------CRUD Operations-------
 # GET - Read
 
-my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1}, {"title": "title of post 2", "content": "content of post 2", "id": 2}]
+'''my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1}, {"title": "title of post 2", "content": "content of post 2", "id": 2}]
 
 def find_post(id): 
     for p in my_posts:
         if p['id'] == id:
-            return p
+            return p'''
 
-@app.get("/posts")
+@app.get("/posts", response_model=List[schemas.Post]) # response_model is used to specify the type of response that we want to return. In this case, we want to return a list of Post objects. This will help FastAPI to automatically convert the list of Post objects to JSON response and send it to the client.
 async def get_posts(db: session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts """)
     # posts = cursor.fetchall()
     
     posts = db.query(models.Post).all()
     print(posts)
-    return {"data": posts}
+    return  posts
 
 # Create
-@app.post("/posts")
-async def create_post(post : Post, db: session = Depends(get_db)):
+@app.post("/posts", response_model=schemas.Post)
+async def create_post(post: schemas.PostCreate, db: session = Depends(get_db)):
         
     # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, 
     #                                     (post.title, post.content, post.published))
@@ -108,7 +107,7 @@ async def create_post(post : Post, db: session = Depends(get_db)):
     db.add(new_post)    
     db.commit()
     db.refresh(new_post)
-    return {"data": new_post}
+    return new_post
 
 @app.get("/posts/{id}")
 async def get_post(id:int, response:Response, db: session = Depends(get_db)): #HTTPException is all it takes
@@ -124,7 +123,7 @@ async def get_post(id:int, response:Response, db: session = Depends(get_db)): #H
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
         # response.status_code = status.HTTP_404_NOT_FOUND
         # return {"message": "Post not found"}
-    return {"post_detail": post}
+    return post
 
 # delete operation
 
@@ -143,8 +142,8 @@ async def delete_post(id:int, db:session = Depends(get_db)):
     db.commit() 
     return {"message": f"Post with id {id} deleted successfully"}
 
-@app.put("/posts/{id}")
-async def update_post(id:int, post: Post, db: session = Depends(get_db)):
+@app.put("/posts/{id}", response_model=schemas.Post)
+async def update_post(id:int, post: schemas.PostCreate, db: session = Depends(get_db)):
     
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, 
     #                                     (post.title, post.content, post.published, str(id)))
@@ -158,5 +157,5 @@ async def update_post(id:int, post: Post, db: session = Depends(get_db)):
     post_query.update(post.model_dump(), synchronize_session=False)
     db.commit()
     
-    return {"message": f"Post with id {id} updated successfully", "data": post_query.first()}
+    return  post_query.first()
     
