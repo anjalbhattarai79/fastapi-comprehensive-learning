@@ -1,13 +1,17 @@
-import random
-from fastapi import  FastAPI, Response, status, HTTPException
-from fastapi.params import Body
+from fastapi import  Depends, FastAPI, Response, status, HTTPException
+from sqlalchemy.orm import session
 from pydantic import BaseModel  
 from typing import Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+from . import models
+from .database import engine, get_db
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
 
 # pydantic schema
 class Post(BaseModel):
@@ -35,6 +39,10 @@ async def read_root():
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to my api 2"}
+
+@app.get("/sqlalchemy")
+async def read_sqlalchemy(db: session = Depends(get_db)):
+    return {"message": "SQLAlchemy is working"}
 
 # using path parameters
 # @app.get("/posts/{i}")
