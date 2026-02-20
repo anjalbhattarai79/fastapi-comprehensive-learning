@@ -76,15 +76,21 @@ async def get_posts():
 # Create
 @app.post("/posts")
 async def create_post(post : Post):
-    post_dict = post.model_dump()
-    post_dict['id'] = random.randint(0, 1000000) # generate random id for the post
-    my_posts.append(post_dict)
-    return {"data": my_posts}
+        
+    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, 
+                                        (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    
+    conn.commit()
+    return {"data": new_post}
 
 @app.get("/posts/{id}")
 async def get_post(id:int, response:Response): #HTTPException is all it takes
-    print(type(id))
-    post = find_post(id)
+    
+    cursor.execute("""SELECT * FROM posts WHERE id = %s """, (str(id),))
+    post = cursor.fetchone()   
+    print(post)
+
     if not post:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
         # response.status_code = status.HTTP_404_NOT_FOUND
@@ -95,18 +101,25 @@ async def get_post(id:int, response:Response): #HTTPException is all it takes
 
 @app.delete("/posts/{id}")
 async def delete_post(id:int): 
-    post = find_post(id)
-    if not post:
+    
+    cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING * """, (str(id),))
+    deleted_post = cursor.fetchone()
+    conn.commit()
+    
+    if not deleted_post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
-    my_posts.remove(post)
     return {"message": f"Post with id {id} deleted successfully"}
 
 @app.put("/posts/{id}")
 async def update_post(id:int, post: Post):
-    post_dict = post.model_dump()
-    post_dict['id'] = id
-    for i, p in enumerate(my_posts):
-        if p['id'] == id:
-            my_posts[i] = post_dict
-            return {"message": f"Post with id {id} updated successfully", "data": post_dict}
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
+    
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, 
+                                        (post.title, post.content, post.published, str(id)))
+    updated_post = cursor.fetchone()
+    conn.commit()
+    
+    if not updated_post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
+    
+    return {"message": f"Post with id {id} updated successfully", "data": updated_post}
+    
