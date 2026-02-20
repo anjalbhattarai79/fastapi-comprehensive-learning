@@ -17,8 +17,8 @@ app = FastAPI()
 class Post(BaseModel):
     title: str
     content: str
-    published: bool = True # optional field with default value
-    rating: Optional[int] = None # optional field with default value None
+    published: bool = True
+
 
 while True:    
     try:
@@ -42,7 +42,12 @@ async def read_root():
 
 @app.get("/sqlalchemy")
 async def read_sqlalchemy(db: session = Depends(get_db)):
-    return {"message": "SQLAlchemy is working"}
+    
+    posts = db.query(models.Post).all() # db.query() prepares the query to be executed. The actual execution happens when we call .all() method, which fetches all the records from the database and returns them as a list of Post objects.
+ 
+    return {"message": "SQLAlchemy is working", "data": posts}
+    # return None
+
 
 # using path parameters
 # @app.get("/posts/{i}")
@@ -74,29 +79,45 @@ def find_post(id):
             return p
 
 @app.get("/posts")
-async def get_posts():
-    cursor.execute("""SELECT * FROM posts """)
-    posts = cursor.fetchall()
+async def get_posts(db: session = Depends(get_db)):
+    # cursor.execute("""SELECT * FROM posts """)
+    # posts = cursor.fetchall()
     
+    posts = db.query(models.Post).all()
     print(posts)
     return {"data": posts}
 
 # Create
 @app.post("/posts")
-async def create_post(post : Post):
+async def create_post(post : Post, db: session = Depends(get_db)):
         
-    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, 
-                                        (post.title, post.content, post.published))
-    new_post = cursor.fetchone()
+    # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, 
+    #                                     (post.title, post.content, post.published))
+    # new_post = cursor.fetchone()
     
-    conn.commit()
+    ''' 
+    Without unpacking the post object, we would have to manually extract each field from the pydantic model and pass it to the Post constructor. 
+    This can be tedious and error-prone, especially if we have many fields in our model.'''
+    # new_post = models.Post(title=post.title, content=post.content, published=post.published)
+    
+    '''
+    unpacking the post object to create a new Post object. 
+    This is a more concise way to create a new Post object from the pydantic model.
+    '''
+    new_post = models.Post(**post.model_dump())
+    db.add(new_post)    
+    db.commit()
+    db.refresh(new_post)
     return {"data": new_post}
 
 @app.get("/posts/{id}")
-async def get_post(id:int, response:Response): #HTTPException is all it takes
+async def get_post(id:int, response:Response, db: session = Depends(get_db)): #HTTPException is all it takes
     
-    cursor.execute("""SELECT * FROM posts WHERE id = %s """, (str(id),))
-    post = cursor.fetchone()   
+    # cursor.execute("""SELECT * FROM posts WHERE id = %s """, (str(id),))
+    # post = cursor.fetchone()   
+    
+    post = db.query(models.Post).filter(models.Post.id == id).first() # filter() is used to filter the records based on the condition provided. In this case, we are filtering the posts based on the id. The first() method is used to fetch the first record that matches the condition. If no record is found, it returns None.
+    
     print(post)
 
     if not post:
@@ -108,26 +129,34 @@ async def get_post(id:int, response:Response): #HTTPException is all it takes
 # delete operation
 
 @app.delete("/posts/{id}")
-async def delete_post(id:int): 
+async def delete_post(id:int, db:session = Depends(get_db)): 
     
-    cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING * """, (str(id),))
-    deleted_post = cursor.fetchone()
-    conn.commit()
+    # cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING * """, (str(id),))
+    # deleted_post = cursor.fetchone()
+    # conn.commit()
     
-    if not deleted_post:
+    deleted_post = db.query(models.Post).filter(models.Post.id == id)
+    
+    if not deleted_post.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
+    deleted_post.delete(synchronize_session=False)
+    db.commit() 
     return {"message": f"Post with id {id} deleted successfully"}
 
 @app.put("/posts/{id}")
-async def update_post(id:int, post: Post):
+async def update_post(id:int, post: Post, db: session = Depends(get_db)):
     
-    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, 
-                                        (post.title, post.content, post.published, str(id)))
-    updated_post = cursor.fetchone()
-    conn.commit()
+    # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, 
+    #                                     (post.title, post.content, post.published, str(id)))
+    # updated_post = cursor.fetchone()
+    # conn.commit()
     
-    if not updated_post:
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    
+    if not post_query.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
+    post_query.update(post.model_dump(), synchronize_session=False)
+    db.commit()
     
-    return {"message": f"Post with id {id} updated successfully", "data": updated_post}
+    return {"message": f"Post with id {id} updated successfully", "data": post_query.first()}
     
