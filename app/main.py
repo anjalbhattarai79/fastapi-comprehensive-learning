@@ -9,6 +9,7 @@ from . import models
 from . import schemas
 from .database import engine, get_db
 from typing import Optional, List
+from .utils import hash
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -161,9 +162,29 @@ async def update_post(id:int, post: schemas.PostCreate, db: session = Depends(ge
     
 @app.post("/users", response_model = schemas.UserOut)    
 async def create_user(user: schemas.UserCreate, db: session = Depends(get_db)):
-    new_post = models.User(**user.model_dump())
-    db.add(new_post)    
-    db.commit()
-    db.refresh(new_post)
-    return new_post
     
+    print("RAW PASSWORD:", user.password)
+    print("BYTE LENGTH:", len(user.password.encode()))
+    
+    # hash the password
+    hashed_password = hash(user.password)
+    
+    print("HASHED PASSWORD:", hashed_password)
+    print("BYTE LENGTH:", len(hashed_password.encode()))
+    user.password = hashed_password
+       
+    
+    new_user = models.User(**user.model_dump())
+    db.add(new_user)    
+    
+    db.commit()
+    db.refresh(new_user)
+    return new_user 
+    
+@app.get('/users/{id}', response_model=schemas.UserOut)
+async def get_user(id: int, db: session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == id).first()
+    
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id {id} not found")
+    return user
