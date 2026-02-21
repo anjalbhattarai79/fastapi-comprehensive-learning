@@ -1,5 +1,6 @@
 from .database import Base
 from sqlalchemy import TIMESTAMP, Column, Integer, String, Boolean, text, ForeignKey
+from sqlalchemy.orm import relationship
 
 
 class Post(Base):
@@ -22,6 +23,10 @@ class Post(Base):
         
     '''
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False) # foreign key to the users table, but we will handle it in the code instead of using actual foreign key constraint in the database
+    
+    # relationship to the User model, back_populates is used to specify the name of the attribute in the User model that will be used to access the posts of a user.
+    owner = relationship("User")  
+    ''' Prevents to writed joins manually. But, User schema should be defined within Postschema in schema.py to give output of the owner details when we fetch the posts. '''
     
 class User(Base):
     __tablename__ = "users"
