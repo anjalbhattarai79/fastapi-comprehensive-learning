@@ -1,7 +1,7 @@
 from fastapi import  Depends, FastAPI, Response, status, HTTPException, APIRouter
 from sqlalchemy.orm import session
 from ..database import get_db
-from .. import models, schemas
+from .. import models, schemas, oauth2
 from typing import List
 
 
@@ -21,7 +21,7 @@ async def get_posts(db: session = Depends(get_db)):
 
 # Create
 @router.post("/", response_model=schemas.Post)
-async def create_post(post: schemas.PostCreate, db: session = Depends(get_db)):
+async def create_post(post: schemas.PostCreate, db: session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
         
     # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, 
     #                                     (post.title, post.content, post.published))
@@ -61,7 +61,7 @@ async def get_post(id:int, response:Response, db: session = Depends(get_db)): #H
 # delete operation
 
 @router.delete("/{id}")
-async def delete_post(id:int, db:session = Depends(get_db)): 
+async def delete_post(id:int, db:session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)): 
     
     # cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING * """, (str(id),))
     # deleted_post = cursor.fetchone()
@@ -76,7 +76,7 @@ async def delete_post(id:int, db:session = Depends(get_db)):
     return {"message": f"Post with id {id} deleted successfully"}
 
 @router.put("/{id}", response_model=schemas.Post)
-async def update_post(id:int, post: schemas.PostCreate, db: session = Depends(get_db)):
+async def update_post(id:int, post: schemas.PostCreate, db: session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
     
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, 
     #                                     (post.title, post.content, post.published, str(id)))
