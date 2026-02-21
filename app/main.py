@@ -9,7 +9,7 @@ from . import models
 from . import schemas
 from .database import engine, get_db
 from .utils import hash
-from .routers import post, users
+from .routers import post, users, auth
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -32,6 +32,7 @@ while True:
         
 app.include_router(post.router)
 app.include_router(users.router)
+app.include_router(auth.router)
    
 
 @app.get("/") # This will be shown
