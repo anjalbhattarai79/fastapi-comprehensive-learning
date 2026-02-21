@@ -10,7 +10,9 @@ router = APIRouter(
     tags=["Posts"]
 )
 
-@router.get("/", response_model=List[schemas.Post]) # response_model is used to specify the type of response that we want to return. In this case, we want to return a list of Post objects. This will help FastAPI to automatically convert the list of Post objects to JSON response and send it to the client.
+# response_model is used to specify the type of response that we want to return. In this case, we want to return a list of Post objects.
+#This will help FastAPI to automatically convert the list of Post objects to JSON response and send it to the client.
+@router.get("/", response_model=List[schemas.Post]) 
 async def get_posts(db: session = Depends(get_db)):
     # cursor.execute("""SELECT * FROM posts """)
     # posts = cursor.fetchall()
@@ -37,15 +39,15 @@ async def create_post(post: schemas.PostCreate, db: session = Depends(get_db), c
     This is a more concise way to create a new Post object from the pydantic model.
     '''
     
-    print(current_user.email)
+    print(current_user.id)
     
-    new_post = models.Post(**post.model_dump())
+    new_post = models.Post(owner_id=current_user.id, **post.model_dump())
     db.add(new_post)    
     db.commit()
     db.refresh(new_post)
     return new_post
 
-@router.get("/{id}")
+@router.get("/{id}", response_model=schemas.Post)
 async def get_post(id:int, response:Response, db: session = Depends(get_db)): #HTTPException is all it takes
     
     # cursor.execute("""SELECT * FROM posts WHERE id = %s """, (str(id),))
@@ -70,16 +72,22 @@ async def delete_post(id:int, db:session = Depends(get_db), current_user: int = 
     # deleted_post = cursor.fetchone()
     # conn.commit()
     
-    deleted_post = db.query(models.Post).filter(models.Post.id == id)
+    post_query = db.query(models.Post).filter(models.Post.id == id)
     
-    if not deleted_post.first():
+    post = post_query.first()
+    
+    if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
-    deleted_post.delete(synchronize_session=False)
+                
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")   
+    
+    post_query.delete(synchronize_session=False)  
     db.commit() 
     return {"message": f"Post with id {id} deleted successfully"}
 
 @router.put("/{id}", response_model=schemas.Post)
-async def update_post(id:int, post: schemas.PostCreate, db: session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+async def update_post(id:int, updated_post: schemas.PostCreate, db: session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     
     # cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING * """, 
     #                                     (post.title, post.content, post.published, str(id)))
@@ -87,10 +95,13 @@ async def update_post(id:int, post: schemas.PostCreate, db: session = Depends(ge
     # conn.commit()
     
     post_query = db.query(models.Post).filter(models.Post.id == id)
-    
-    if not post_query.first():
+    post = post_query.first()
+    if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found")
-    post_query.update(post.model_dump(), synchronize_session=False)
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to perform requested action")
+    
+    post_query.update(updated_post.model_dump(), synchronize_session=False)
     db.commit()
     
     return  post_query.first()
