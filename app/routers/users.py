@@ -5,7 +5,8 @@ from .. import models, schemas
 
 
 router = APIRouter(
-    prefix="/users"
+    prefix="/users",
+    tags=["Users"]
 )
    
 @router.post("/", response_model = schemas.UserOut)    

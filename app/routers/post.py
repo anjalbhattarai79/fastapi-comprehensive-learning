@@ -6,7 +6,8 @@ from typing import List
 
 
 router = APIRouter(
-    prefix="/posts"
+    prefix="/posts",
+    tags=["Posts"]
 )
 
 @router.get("/", response_model=List[schemas.Post]) # response_model is used to specify the type of response that we want to return. In this case, we want to return a list of Post objects. This will help FastAPI to automatically convert the list of Post objects to JSON response and send it to the client.
