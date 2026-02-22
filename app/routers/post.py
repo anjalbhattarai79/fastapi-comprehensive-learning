@@ -2,7 +2,7 @@ from fastapi import  Depends, FastAPI, Response, status, HTTPException, APIRoute
 from sqlalchemy.orm import session
 from ..database import get_db
 from .. import models, schemas, oauth2
-from typing import List
+from typing import List, Optional
 
 
 router = APIRouter(
@@ -13,11 +13,14 @@ router = APIRouter(
 # response_model is used to specify the type of response that we want to return. In this case, we want to return a list of Post objects.
 #This will help FastAPI to automatically convert the list of Post objects to JSON response and send it to the client.
 @router.get("/", response_model=List[schemas.Post]) 
-async def get_posts(db: session = Depends(get_db)):
+async def get_posts(db: session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user),
+                    limit: int = 10, skip: int = 0, search: Optional[str] = ""): # for space in search query, we need %20 instead
     # cursor.execute("""SELECT * FROM posts """)
     # posts = cursor.fetchall()
     
-    posts = db.query(models.Post).all()
+    print(limit)
+    
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     print(posts)
     return  posts
 
