@@ -4,8 +4,8 @@ from .database import engine
 from .routers import post, users, auth, vote
 from .config import settings
 
-
-models.Base.metadata.create_all(bind=engine)
+'''This allows sqlalchemy to create tables AUTOMATICALLY -- NOte: NOT update !!! '''
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
        
