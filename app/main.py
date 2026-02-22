@@ -1,41 +1,19 @@
-from fastapi import  Depends, FastAPI, Response, status, HTTPException
-from sqlalchemy.orm import session
-from pydantic import BaseModel  
-from typing import Optional
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import time
+from fastapi import   FastAPI
 from . import models
-from . import schemas
-from .database import engine, get_db
-from .utils import hash
+from .database import engine
 from .routers import post, users, auth
+from .config import settings
+
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-
-
-
-while True:    
-    try:
-        conn = psycopg2.connect(host="localhost", database="fastapi", user="postgres", password="admin", cursor_factory=RealDictCursor)
-        cursor = conn.cursor()
-        print("Database connection  successful")
-        break
-        
-    except Exception as e:
-        print("Database connection failed")
-        print("Error: ", e)
-        time.sleep(2) # wait for 2 seconds before trying to connect again
-        
+       
 app.include_router(post.router)
 app.include_router(users.router)
 app.include_router(auth.router)
    
-
-@app.get("/") # This will be shown
+@app.get("/") # This will be shown as this is seen at first from TOP-BOTTOM order.
 async def read_root():
     return {"message": "Welcome to my api"}   
 
@@ -43,6 +21,10 @@ async def read_root():
 async def read_root():
     return {"message": "Welcome to my api 2"}
 
+
+
+
+#----------------Done----------------------#
 '''@app.get("/sqlalchemy")
 async def read_sqlalchemy(db: session = Depends(get_db)):
     
@@ -75,7 +57,6 @@ async def create_post(post : Post):
 # GET - Read
 
 '''my_posts = [{"title": "title of post 1", "content": "content of post 1", "id": 1}, {"title": "title of post 2", "content": "content of post 2", "id": 2}]
-
 def find_post(id): 
     for p in my_posts:
         if p['id'] == id:
