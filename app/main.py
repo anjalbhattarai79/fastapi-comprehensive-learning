@@ -1,7 +1,7 @@
 from fastapi import   FastAPI
 from . import models
 from .database import engine
-from .routers import post, users, auth
+from .routers import post, users, auth, vote
 from .config import settings
 
 
@@ -12,6 +12,7 @@ app = FastAPI()
 app.include_router(post.router)
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(vote.router)
    
 @app.get("/") # This will be shown as this is seen at first from TOP-BOTTOM order.
 async def read_root():
