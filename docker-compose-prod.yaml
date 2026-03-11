@@ -1,0 +1,45 @@
+version: "3"
+services:
+  api:
+    # build: . # location of Dockerfile
+    image: anjalbhattarai79/fastapifulllearning-api-1
+    depends_on:
+      - postgres
+    ports: 
+      - "80:8000" # port on host ie.  : port on container
+
+    # volumes:
+    # # sync changes in local device and container for development.
+    #   - ./:/usr/src/app:ro
+
+    #This overcomes command from dockerfile; this is used for development; for production, we can use command in dockerfile.
+    # command: uvicorn app.main:app --host 0.0.0.0  --port 8000 --reload
+
+    # env_file:
+    #   - ./.env
+    environment:
+      - DATABASE_HOSTNAME=${DATABASE_HOSTNAME}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+    
+  postgres:
+  #uderstand build versus image in these 2 services.
+    image: postgres:latest  # pulling image from docker hub; no dockerfile used.
+    environment:
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+
+    # volume allow to access data outside of container; 
+    # if container is deleted/taken down, data is still there in volume; 
+    # if we use bind mount, data will be stored on host machine;
+    # if we use named volume, data will be stored in docker's internal storage; here we are using named volume.
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
