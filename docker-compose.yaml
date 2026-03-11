@@ -2,12 +2,22 @@ version: "3"
 services:
   api:
     build: . # location of Dockerfile
+    depends_on:
+      - postgres
     ports: 
       - "8000:8000" # port on host ie.  : port on container
+
+    volumes:
+    # sync changes in local device and container for development.
+      - ./:/usr/src/app:ro
+
+    #This overcomes command from dockerfile; this is used for development; for production, we can use command in dockerfile.
+    command: uvicorn app.main:app --host 0.0.0.0  --port 8000 --reload
+
     # env_file:
     #   - ./.env
     environment:
-      - DATABASE_HOSTNAME=localhost
+      - DATABASE_HOSTNAME=postgres # changed from localhost to postgres, to allow service - to - service communication in docker network
       - DATABASE_PORT=5432
       - DATABASE_PASSWORD=admin
       - DATABASE_NAME=fastapi
@@ -15,3 +25,21 @@ services:
       - SECRET_KEY=0bf57169fe8bc6c293605af062de6748f9ea3591f050d9a51d150df35c0ba23d
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
+    
+  postgres:
+  #uderstand build versus image in these 2 services.
+    image: postgres:latest  # pulling image from docker hub; no dockerfile used.
+    environment:
+      - POSTGRES_DB=fastapi
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+
+    # volume allow to access data outside of container; 
+    # if container is deleted/taken down, data is still there in volume; 
+    # if we use bind mount, data will be stored on host machine;
+    # if we use named volume, data will be stored in docker's internal storage; here we are using named volume.
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+volumes:
+  postgres_data:
