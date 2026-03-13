@@ -10,7 +10,7 @@ router = APIRouter(
 )
 
 
-@router.post("/login")
+@router.post("/login", status_code=status.HTTP_200_OK)
 # Using OAuth2PasswordRequestForm instead of pydantic schema ; need to send the data in form-data format instead of json format from frontend. 
 async def login(user_login: OAuth2PasswordRequestForm = Depends(), users_db: session = Depends(get_db)):
     
