@@ -14,3 +14,7 @@ def test_create_user(client):
     assert new_user.email == "test@125.com"
     assert res.status_code == 201
 
+def test_login_user(client):
+    res = client.post("auth/login", data={"username": "test@125.com", "password": "password123"})   
+    print(res.json())
+    assert res.status_code == 200

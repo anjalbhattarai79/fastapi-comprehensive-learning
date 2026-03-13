@@ -15,7 +15,7 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def session():
     models.Base.metadata.drop_all(bind=engine) # clear earlier data if exist first, now latest test-data will be stored.
     models.Base.metadata.create_all(bind=engine)
@@ -28,7 +28,7 @@ def session():
         db.close()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def client(session):   
     def override_get_db():
         try:
