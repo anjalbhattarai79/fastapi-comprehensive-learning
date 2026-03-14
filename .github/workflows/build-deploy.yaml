@@ -5,7 +5,8 @@ on: [push, pull_request]
 jobs:
   job1:
     runs-on: ubuntu-latest
-
+    environment: 
+     name: testing
     env:
       DATABASE_HOSTNAME: localhost
       DATABASE_PORT: 5432
