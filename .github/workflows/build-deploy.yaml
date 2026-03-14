@@ -97,6 +97,10 @@ jobs:
     steps:
       - name: pulling git repo
         uses: actions/checkout@v2
+
+      - name: Install Heroku CLI
+        uses: ynab/heroku-cli-action@v1
+
       - name: deploying to Heroku
         uses: akhileshns/heroku-deploy@v3.12.12 # This is the action
         with:
