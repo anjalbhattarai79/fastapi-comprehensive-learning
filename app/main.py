@@ -26,7 +26,7 @@ app.include_router(vote.router)
    
 @app.get("/") # This will be shown as this is seen at first from TOP-BOTTOM order.
 async def read_root():
-    return {"message": "hello world , Successfully deployed from CI/CD pipeline"}   
+    return {"message": "hello world , Successfully deployed from CI/CD pipeline on both Heroku and Ubuntu server."}   
 
 @app.get("/api2")
 async def read_api2():
