@@ -11,6 +11,6 @@ jobs:
      uses: actions/checkout@v2
      
    - name: say hi to anjal
-     uses: echo "Hello Anjal, Welcome to GitHub Actions"
+     run: echo "Hello Anjal, Welcome to GitHub Actions"
       
   
