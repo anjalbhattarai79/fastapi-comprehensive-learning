@@ -1,7 +1,7 @@
 from app import models, schemas
 from jose import jwt
 from app.config import settings
-
+import pytest
 
     
 # def test_root(client):
@@ -30,5 +30,14 @@ def test_login_user(client, test_user):
     
     assert res.status_code == 200
 
-
-
+@pytest.mark.parametrize("email, password, status_code", [
+    ('wrongemail@125.com', 'password123', 403),
+    ('test@125.com', 'wrongpassword', 403),
+    ('wrongemail@gmail.com', 'wrongpassword', 403),
+    (None, 'password123', 422),
+    ('test@125.com', None, 422)
+])
+def test_incorrect_login(client, test_user, email, password, status_code):
+    res = client.post("auth/login", data={"username": email, "password": password})   
+    assert res.status_code == status_code
+    
