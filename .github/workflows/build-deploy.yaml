@@ -6,25 +6,22 @@ jobs:
   job1:
     runs-on: ubuntu-latest
 
-    environment:
-      name: testing
-
     env:
       DATABASE_HOSTNAME: localhost
       DATABASE_PORT: 5432
-      DATABASE_NAME: fastapi
-      DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+      DATABASE_NAME: fastapi_test
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: admin
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       ALGORITHM: ${{ secrets.ALGORITHM }}
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
 
     services:
       postgres:
-        image: postgres
+        image: postgres:16
         env:
-          POSTGRES_USER: ${{ secrets.DATABASE_USERNAME }}
-          POSTGRES_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: admin
           POSTGRES_DB: fastapi_test
         ports:
           - 5432:5432
@@ -35,13 +32,15 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Pull repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
 
       - name: Install dependencies
         run: |
@@ -49,21 +48,20 @@ jobs:
           pip install -r requirements.txt
           pip install pytest psycopg2-binary
 
-      - name: Wait for Postgres
+      - name: Install postgres client
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
+
+      - name: Wait for Postgres
+        env:
+          PGPASSWORD: admin
+        run: |
           until pg_isready -h localhost -p 5432 -U postgres -d fastapi_test; do
             echo "Waiting for postgres..."
             sleep 2
           done
-
-      - name: Show safe DB target
-        run: |
-          echo "HOST=$DATABASE_HOSTNAME"
-          echo "PORT=$DATABASE_PORT"
-          echo "DB=${DATABASE_NAME}_test"
-          echo "USER=$DATABASE_USERNAME"
+          psql -h localhost -U postgres -d fastapi_test -c "select 1;"
 
       - name: Run tests
         run: pytest -v
