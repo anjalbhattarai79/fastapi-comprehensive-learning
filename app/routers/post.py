@@ -30,7 +30,7 @@ async def get_posts(db: session = Depends(get_db), current_user: int = Depends(o
     return  results
 
 # Create
-@router.post("/", response_model=schemas.Post)
+@router.post("/", response_model=schemas.Post, status_code=status.HTTP_201_CREATED)
 async def create_post(post: schemas.PostCreate, db: session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
         
     # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """, 
@@ -77,7 +77,7 @@ async def get_post(id:int, response:Response, db: session = Depends(get_db)): #H
 
 # delete operation
 
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(id:int, db:session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)): 
     
     # cursor.execute("""DELETE FROM posts WHERE id = %s RETURNING * """, (str(id),))
