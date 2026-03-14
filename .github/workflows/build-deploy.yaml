@@ -10,7 +10,7 @@ jobs:
     env:
       DATABASE_HOSTNAME: localhost
       DATABASE_PORT: 5432
-      DATABASE_NAME: fastapi_test
+      DATABASE_NAME: ${{secrets.DATABASE_NAME}}
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: admin
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -23,7 +23,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: admin
-          POSTGRES_DB: fastapi_test
+          POSTGRES_DB: ${{secrets.DATABASE_NAME}}_test
         ports:
           - 5432:5432
         options: >-
