@@ -143,8 +143,8 @@ jobs:
           username: ${{ secrets.PROD_USERNAME }}
           password: ${{ secrets.PROD_PASSWORD }}
           script: |
-            cd ~/app
+            cd ~/app/src
             echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/fastapi-fullcourse:latest
-            docker compose -f docker-compose-prod.yaml down
-            docker compose -f docker-compose-prod.yaml up -d
+            sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/fastapi-fullcourse:latest
+            sudo docker compose -f docker-compose-prod.yaml down
+            sudo docker compose -f docker-compose-prod.yaml up -d

@@ -2,7 +2,7 @@ version: "3"
 services:
   api:
     # build: . # location of Dockerfile
-    image: anjalbhattarai79/fastapifulllearning-api-1
+    image: anjalbhattarai79/fastapi-fullcourse:latest
     depends_on:
       - postgres
     ports: 
