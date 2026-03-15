@@ -6,7 +6,7 @@ services:
     depends_on:
       - postgres
     ports: 
-      - "80:8000" # port on host ie.  : port on container
+      - "8080:8000" # port on host ie.  : port on container
 
     # volumes:
     # # sync changes in local device and container for development.
