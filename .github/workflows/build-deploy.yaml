@@ -127,14 +127,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+    
       - name: Copy production compose file to Ubuntu server
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USERNAME }}
-          password: ${{ secrets.PROD_PASSWORD }}
-          source: "docker-compose-prod.yaml"
-          target: "~/app"
+         host: ${{ secrets.PROD_HOST }}
+         username: ${{ secrets.PROD_USERNAME }}
+         password: ${{ secrets.PROD_PASSWORD }}
+         source: "docker-compose-prod.yaml"
+         target: "~/app/src"
 
       - name: Deploy to Ubuntu using Docker Compose
         uses: appleboy/ssh-action@v1.0.3
